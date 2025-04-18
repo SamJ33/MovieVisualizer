@@ -1,0 +1,91 @@
+import requests
+import pandas as pd
+import time
+import re
+
+API_KEY = '8b7e86368ff6b1858fb7f21d5821b211'
+SEARCH_URL = 'https://api.themoviedb.org/3/search/movie'
+DETAILS_URL = 'https://api.themoviedb.org/3/movie/{}'
+CREDITS_URL = 'https://api.themoviedb.org/3/movie/{}/credits'
+IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'
+
+# Movie list (title and year split)
+raw_movies = [
+    "Avatar (2009)", "Avengers: Endgame (2019)", "Avatar: The Way of Water (2022)", "Titanic (1997)",
+    "Star Wars: Episode VII – The Force Awakens (2015)", "Avengers: Infinity War (2018)",
+    "Spider-Man: No Way Home (2021)", "Ne Zha 2 (2025)", "Inside Out 2 (2024)", "Jurassic World (2015)",
+    "The Lion King (2019)", "The Avengers (2012)", "Furious 7 (2015)", "Top Gun: Maverick (2022)",
+    "Frozen II (2019)", "Barbie (2023)", "Avengers: Age of Ultron (2015)", "The Super Mario Bros. Movie (2023)",
+    "Black Panther (2018)", "Harry Potter and the Deathly Hallows- Part 2 (2011)", "Star Wars: The Last Jedi (2017)",
+    "Jurassic World: Fallen Kingdom (2018)", "Beauty and the Beast (2017)", "Incredibles 2 (2018)",
+    "The Fate of the Furious (2017)", "Iron Man 3 (2013)", "Minions (2015)", "Captain America: Civil War (2016)",
+    "Aquaman (2018)", "The Lord of the Rings: The Return of the King (2003)", "Spider-Man: Far From Home (2019)",
+    "Captain Marvel (2019)", "Transformers: Dark of the Moon (2011)", "Skyfall (2012)",
+    "Transformers: Age of Extinction (2014)", "The Dark Knight Rises (2012)", "Joker (2019)",
+    "Star Wars: The Rise of Skywalker (2019)", "Toy Story 4 (2019)", "Toy Story 3 (2010)",
+    "Pirates of the Caribbean: Dead Man's Chest (2006)", "Moana 2 (2024)", "Rogue One: A Star Wars Story (2016)",
+    "Aladdin (2019)", "Star Wars: Episode I - The Phantom Menace (1999)",
+    "Pirates of the Caribbean: On Stranger Tides (2011)", "Jurassic Park (1993)", "Despicable Me 3 (2017)",
+    "Finding Dory (2016)", "Star Wars: Episode IX-The Rise of Skywalker (2019)"
+]
+
+# Helper to extract title and year
+def extract_title_year(movie_str):
+    match = re.match(r'^(.*?)\s+\((\d{4})\)$', movie_str)
+    if match:
+        return match.group(1), match.group(2)
+    return movie_str, None
+
+def get_movie_info(title, year):
+    search = requests.get(SEARCH_URL, params={'api_key': API_KEY, 'query': title}).json()
+    results = search.get('results', [])
+
+    if not results:
+        return {'title': title, 'error': 'Not found'}
+
+    # Filter by year if available
+    if year:
+        results = [r for r in results if r.get('release_date', '').startswith(year)]
+
+    if not results:
+        return {'title': title, 'error': 'No match for year'}
+
+    movie = results[0]
+    movie_id = movie['id']
+
+    details = requests.get(DETAILS_URL.format(movie_id), params={'api_key': API_KEY}).json()
+    credits = requests.get(CREDITS_URL.format(movie_id), params={'api_key': API_KEY}).json()
+
+    # Find the director
+    director = ''
+    for crew_member in credits.get('crew', []):
+        if crew_member.get('job') == 'Director':
+            director = crew_member.get('name')
+            break
+
+    return {
+        'title': title + f" ({year})" if year else title,
+        'poster_url': IMAGE_BASE_URL + movie['poster_path'] if movie.get('poster_path') else None,
+        'genres': [genre['name'] for genre in details.get('genres', [])],
+        'release_year': details.get('release_date', '')[:4],
+        'runtime': details.get('runtime', ''),
+        'director': director
+    }
+
+# Fetch info for all movies
+data = []
+for raw_title in raw_movies:
+    try:
+        title, year = extract_title_year(raw_title)
+        info = get_movie_info(title, year)
+        data.append(info)
+        print(f"✅ Retrieved: {raw_title}")
+        time.sleep(0.3)
+    except Exception as e:
+        print(f"❌ Error with {raw_title}: {str(e)}")
+        data.append({'title': raw_title, 'error': str(e)})
+
+# Save to CSV
+df = pd.DataFrame(data)
+df.to_csv("movie_info.csv", index=False)
+print("✅ Movie data retrieval complete. CSV file saved as 'movie_info.csv'.")

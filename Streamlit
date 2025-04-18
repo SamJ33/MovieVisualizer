@@ -1,0 +1,46 @@
+# app.py
+import streamlit as st
+import pandas as pd
+from PIL import Image
+import requests
+from io import BytesIO
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud
+
+# Load CSV
+df = pd.read_csv("movie_info.csv")
+
+st.set_page_config(layout="wide")
+st.title("🎬 Movie Explorer Dashboard")
+
+# Sidebar
+movie_titles = df['title'].tolist()
+selected_movie = st.sidebar.selectbox("Choose a movie", movie_titles)
+
+# Filter selected movie
+movie_data = df[df['title'] == selected_movie].iloc[0]
+
+# Layout: Info + Poster
+col1, col2 = st.columns([2, 1])
+with col1:
+    st.subheader(f"{selected_movie}")
+    st.markdown(f"**Release Year:** {movie_data['release_year']}")
+    st.markdown(f"**Runtime:** {movie_data['runtime']} minutes")
+    st.markdown(f"**Genres:** {', '.join(eval(movie_data['genres'])) if pd.notnull(movie_data['genres']) else 'N/A'}")
+    st.markdown(f"**Director:** {movie_data['director']}")
+    
+    # Bar chart of top-grossing movies (below movie info)st.markdown("#### 🏆 Top 10 Movies by Worldwide Gross")
+    top_10 = df[['title', 'Worldwide Gross']].dropna().sort_values(by="Worldwide Gross", ascending=False).head(10)
+    st.bar_chart(top_10.set_index('title'))
+with col2:
+    if pd.notnull(movie_data['poster_url']):
+        response = requests.get(movie_data['poster_url'])
+        img = Image.open(BytesIO(response.content))
+        st.image(img, use_container_width=True)
+    else:
+        st.write("Poster not available")
+
+
+# Placeholder for next steps
+st.markdown("---")
+st.subheader("📊 Reviews & Sentiment (Coming Next!)")

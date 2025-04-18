@@ -10,7 +10,7 @@ from selenium.common.exceptions import NoSuchElementException
 # ------------------- CONFIG -------------------
 
 REVIEWS_PER_MOVIE = 100
-MOVIE_CSV = "MovieReviewS.csv"
+MOVIE_CSV = "MovieReviewS.csv" #You change the name ACCORDING TO YOUR fILE!!!
 OUTPUT_CSV = "all_reviews.csv"
 WAIT_BETWEEN_REVIEWS = (2, 5)     # seconds
 WAIT_BETWEEN_MOVIES = (10, 20)    # seconds
@@ -104,7 +104,7 @@ def main():
     driver = init_driver()
     movie_list = load_movie_list(MOVIE_CSV)
 
-    your_movies = movie_list[:18]  # You're scraping 18, others will scrape 16
+    your_movies = movie_list[:16]  # You're scraping 18, others will scrape 16
 
     for idx, movie in enumerate(your_movies):
         if already_scraped(movie):
@@ -123,7 +123,7 @@ def main():
         time.sleep(random.uniform(*WAIT_BETWEEN_MOVIES))
 
     driver.quit()
-    print("\n🎉 Done scraping your 18 movies!")
+    print("\n🎉 Done scraping your 16 movies!")
 
 if __name__ == "__main__":
     main()

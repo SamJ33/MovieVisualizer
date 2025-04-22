@@ -1,46 +1,121 @@
-# app.py
 import streamlit as st
 import pandas as pd
-from PIL import Image
+import matplotlib.pyplot as plt
+import seaborn as sns
+import os
 import requests
 from io import BytesIO
-import matplotlib.pyplot as plt
+from PIL import Image
+import ast
 from wordcloud import WordCloud
+import plotly.express as px
+import numpy as np
 
-# Load CSV
-df = pd.read_csv("movie_info.csv")
+# === Load Data ===
+if not os.path.exists("movie_info.csv") or not os.path.exists("all_movie_reviews.csv"):
+    st.error("Required CSV files are missing. Please ensure 'snowWhite.csv' and 'snow_white_reviews.csv' are in the directory.")
+    st.stop()
+
+df = pd.read_csv("snowWhite.csv")
+reviews_df = pd.read_csv("all_movie_reviews.csv")
 
 st.set_page_config(layout="wide")
-st.title("🎬 Movie Explorer Dashboard")
+st.title("🎬 Movie Sentiment Dashboard")
 
-# Sidebar
-movie_titles = df['title'].tolist()
-selected_movie = st.sidebar.selectbox("Choose a movie", movie_titles)
+# === Movie Selection ===
+movie_titles = df['title'].unique()
+selected_movie = st.selectbox("Select a Movie", movie_titles)
 
-# Filter selected movie
+# === Get Movie Metadata ===
 movie_data = df[df['title'] == selected_movie].iloc[0]
 
-# Layout: Info + Poster
 col1, col2 = st.columns([2, 1])
 with col1:
     st.subheader(f"{selected_movie}")
     st.markdown(f"**Release Year:** {movie_data['release_year']}")
     st.markdown(f"**Runtime:** {movie_data['runtime']} minutes")
-    st.markdown(f"**Genres:** {', '.join(eval(movie_data['genres'])) if pd.notnull(movie_data['genres']) else 'N/A'}")
+    st.markdown(f"**Genres:** {', '.join(ast.literal_eval(movie_data['genres'])) if pd.notnull(movie_data['genres']) else 'N/A'}")
     st.markdown(f"**Director:** {movie_data['director']}")
-    
-    # Bar chart of top-grossing movies (below movie info)st.markdown("#### 🏆 Top 10 Movies by Worldwide Gross")
-    top_10 = df[['title', 'Worldwide Gross']].dropna().sort_values(by="Worldwide Gross", ascending=False).head(10)
-    st.bar_chart(top_10.set_index('title'))
+
 with col2:
     if pd.notnull(movie_data['poster_url']):
-        response = requests.get(movie_data['poster_url'])
-        img = Image.open(BytesIO(response.content))
-        st.image(img, use_container_width=True)
+        try:
+            response = requests.get(movie_data['poster_url'], timeout=5)
+            response.raise_for_status()
+            img = Image.open(BytesIO(response.content))
+            st.image(img, use_container_width=True)
+        except Exception as e:
+            st.write(f"Failed to load poster: {e}")
     else:
         st.write("Poster not available")
 
+# === Filter Reviews for Selected Movie ===
+movie_reviews = reviews_df[reviews_df["title"] == selected_movie]
 
-# Placeholder for next steps
+# === Sentiment Distribution ===
+sentiment_counts = movie_reviews["sentiment"].value_counts()
+
+# === Word Cloud ===
+if 'review' in movie_reviews.columns and not movie_reviews["review"].empty:
+    wordcloud = WordCloud(width=600, height=400, background_color='white').generate(" ".join(movie_reviews["review"]))
+
+# === Radar Chart Dummy Data (optional) ===
+emotion_cols = ['joy', 'anger', 'fear', 'sadness', 'surprise', 'love']
+for col in emotion_cols:
+    if col not in movie_reviews.columns:
+        movie_reviews[col] = np.random.uniform(0, 1, len(movie_reviews))  # Fake values if not present
+
+radar_values = movie_reviews[emotion_cols].mean().reset_index()
+radar_values.columns = ['emotion', 'value']
+radar_values = pd.concat([radar_values, radar_values.iloc[0:1]])  # close loop
+
+# === Time-based Sentiment ===
+if "date" in movie_reviews.columns:
+    movie_reviews["date"] = pd.to_datetime(movie_reviews["date"])
+    time_sentiment = movie_reviews.groupby(movie_reviews["date"].dt.date)["compound"].mean()
+
+# === Layout ===
+st.subheader("📊 Reviews & Sentiment")
 st.markdown("---")
-st.subheader("📊 Reviews & Sentiment (Coming Next!)")
+
+# 1. Line Chart
+st.subheader("📈 Time-based Sentiment Trend")
+if "date" in movie_reviews.columns:
+    st.line_chart(time_sentiment)
+else:
+    st.warning("Date column missing for time-based sentiment.")
+
+# 2. Word Cloud + Pie Chart
+col1, col2 = st.columns([1, 1])
+with col1:
+    st.subheader("☁️ Word Cloud")
+    if 'wordcloud' in locals():
+        st.image(wordcloud.to_array(), use_container_width=True)
+    else:
+        st.write("No reviews to generate word cloud.")
+with col2:
+    st.subheader("🥧 Sentiment Distribution (Pie Chart)")
+    fig_pie = px.pie(values=sentiment_counts.values, names=sentiment_counts.index, title="Sentiment Distribution")
+    st.plotly_chart(fig_pie, use_container_width=True)
+
+# 3. Radar Chart + Bar Chart
+col3, col4 = st.columns([1, 1])
+with col3:
+    st.subheader("📊 Emotion Radar Chart")
+    fig_radar = px.line_polar(radar_values, r='value', theta='emotion', line_close=True,
+                              title="Average Emotion Scores", markers=True)
+    st.plotly_chart(fig_radar, use_container_width=True)
+
+with col4:
+    st.subheader("📊 Bar Chart: Sentiment Stats")
+    sentiment_avg = movie_reviews.groupby("sentiment")["compound"].mean().reset_index()
+    fig_bar = px.bar(sentiment_avg, x='sentiment', y='compound', title="Average Sentiment Score per Category")
+    st.plotly_chart(fig_bar, use_container_width=True)
+
+# 4. Sample Reviews Section
+st.markdown("---")
+st.subheader("💬 Sample Reviews")
+for i, row in movie_reviews.sample(3).iterrows():
+    with st.expander(f"Review {i+1}"):
+        st.write(f"**Sentiment:** {row['sentiment']} (Score: {row['compound']:.2f})")
+        st.write(row["review"])

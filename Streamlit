@@ -12,12 +12,12 @@ import plotly.express as px
 import numpy as np
 
 # === Load Data ===
-if not os.path.exists("movie_info.csv") or not os.path.exists("all_movie_reviews.csv"):
-    st.error("Required CSV files are missing. Please ensure 'snowWhite.csv' and 'snow_white_reviews.csv' are in the directory.")
+if not os.path.exists("movie_info.csv") or not os.path.exists("analyzed_reviews.csv"):
+    st.error("Required CSV files are missing. Please ensure 'movie_info.csv' and '_reviews.csv' are in the directory.")
     st.stop()
 
-df = pd.read_csv("snowWhite.csv")
-reviews_df = pd.read_csv("all_movie_reviews.csv")
+df = pd.read_csv("movies_info.csv")
+reviews_df = pd.read_csv("analyzed_reviews.csv")
 
 st.set_page_config(layout="wide")
 st.title("🎬 Movie Sentiment Dashboard")

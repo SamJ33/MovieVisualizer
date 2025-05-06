@@ -3,38 +3,37 @@ import pandas as pd
 import time
 import re
 
-API_KEY = ''#You Add your own Key 
+API_KEY = ''#You Add Your Own KEY
 SEARCH_URL = 'https://api.themoviedb.org/3/search/movie'
 DETAILS_URL = 'https://api.themoviedb.org/3/movie/{}'
 CREDITS_URL = 'https://api.themoviedb.org/3/movie/{}/credits'
 IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'
 
-# Movie list (title and year split)
 raw_movies = [
-    "Avatar (2009)", "Avengers: Endgame (2019)", "Avatar: The Way of Water (2022)", "Titanic (1997)",
-    "Star Wars: Episode VII – The Force Awakens (2015)", "Avengers: Infinity War (2018)",
-    "Spider-Man: No Way Home (2021)", "Ne Zha 2 (2025)", "Inside Out 2 (2024)", "Jurassic World (2015)",
-    "The Lion King (2019)", "The Avengers (2012)", "Furious 7 (2015)", "Top Gun: Maverick (2022)",
-    "Frozen II (2019)", "Barbie (2023)", "Avengers: Age of Ultron (2015)", "The Super Mario Bros. Movie (2023)",
-    "Black Panther (2018)", "Harry Potter and the Deathly Hallows- Part 2 (2011)", "Star Wars: The Last Jedi (2017)",
-    "Jurassic World: Fallen Kingdom (2018)", "Beauty and the Beast (2017)", "Incredibles 2 (2018)",
-    "The Fate of the Furious (2017)", "Iron Man 3 (2013)", "Minions (2015)", "Captain America: Civil War (2016)",
-    "Aquaman (2018)", "The Lord of the Rings: The Return of the King (2003)", "Spider-Man: Far From Home (2019)",
-    "Captain Marvel (2019)", "Transformers: Dark of the Moon (2011)", "Skyfall (2012)",
-    "Transformers: Age of Extinction (2014)", "The Dark Knight Rises (2012)", "Joker (2019)",
-    "Star Wars: The Rise of Skywalker (2019)", "Toy Story 4 (2019)", "Toy Story 3 (2010)",
-    "Pirates of the Caribbean: Dead Man's Chest (2006)", "Moana 2 (2024)", "Rogue One: A Star Wars Story (2016)",
-    "Aladdin (2019)", "Star Wars: Episode I - The Phantom Menace (1999)",
-    "Pirates of the Caribbean: On Stranger Tides (2011)", "Jurassic Park (1993)", "Despicable Me 3 (2017)",
-    "Finding Dory (2016)", "Star Wars: Episode IX-The Rise of Skywalker (2019)"
+    "Titanic (1997)", "Barbie (2023)", "Furious 7 (2015)", "Jurassic World (2015)", "The Avengers (2012)",
+    "Ne Zha 2 (2025)", "Inside Out 2 (2024)", "The Lion King (1994)", "Avengers Endgame (2019)",
+    "Avengers Infinity War (2018)", "Avatar The Way Of Water (2022)", "Spider-Man No Way Home (2021)",
+    "Star Wars The Force Awakens (2015)", "Top Gun Maverick (2022)", "Avatar (2009)", "Frozen 2 (2019)",
+    "Star Wars: Episode I- The Phantom Menace (Unknown)", "The Batman (2022)", "Skyfall (2012)", "Joker (2019)",
+    "Toy Story 4 (2019)", "Aladdin (2019)", "Despicable Me 3 (2017)", "Transformers: Age Of Extinction (2014)",
+    "The Dark Knight Rises (2012)", "Star Wars: The Rise Of Skywalker (2019)", "Toy Story 3 (2010)",
+    "Pirates Of The Caribbean: Dead Man'S Chest (2006)", "Moana 2 (2025)", "Rogue One: A Star Wars Story (2016)",
+    "Pirates Of The Caribbean: On Stranger Tides (2011)", "Jurassic Park (1993)", "Finding Dory (2016)",
+    "Avengers: Age Of Ultron (2015)", "Super Mario Bros. (2023)", "Star Wars: The Last Jedi (2017)",
+    "Black Panther (2018)", "Harry Potter And The Deathly Hallows (2010)", "Jurassic World Fallen Kingdom (2018)",
+    "Beauty And The Beast (2017)", "Incredibles 2 (2018)", "The Fate Of The Furious (2017)", "Iron Man 3 (2013)",
+    "Minions (2015)", "Captain America Civil War (2016)", "Aquaman (2018)",
+    "The Lord Of The Rings The Return Of The King (2003)", "Spider Man Far From Home (2019)", "Captain Marvel (2019)",
+    "Transformers Dark Of The Moon (2011)"
 ]
 
-# Helper to extract title and year
 def extract_title_year(movie_str):
-    match = re.match(r'^(.*?)\s+\((\d{4})\)$', movie_str)
+    match = re.match(r'^(.*?)\s+\((\d{4}|Unknown)\)$', movie_str)
     if match:
-        return match.group(1), match.group(2)
-    return movie_str, None
+        title, year = match.group(1).strip(), match.group(2)
+        return title, None if year == "Unknown" else year
+    return movie_str.strip(), None
+
 
 def get_movie_info(title, year):
     search = requests.get(SEARCH_URL, params={'api_key': API_KEY, 'query': title}).json()
@@ -87,5 +86,5 @@ for raw_title in raw_movies:
 
 # Save to CSV
 df = pd.DataFrame(data)
-df.to_csv("movie_info.csv", index=False)
+df.to_csv("movie_info2.csv", index=False)
 print("✅ Movie data retrieval complete. CSV file saved as 'movie_info.csv'.")

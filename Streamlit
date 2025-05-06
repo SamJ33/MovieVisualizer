@@ -10,203 +10,133 @@ import ast
 import os
 
 st.set_page_config(layout="wide", page_title="Movie Dashboard", page_icon="🎬")
-# === Cached Loaders ===
+
 @st.cache_data
 def load_movie_info():
-    return pd.read_csv("movie_info.csv")
+    df = pd.read_csv("movie_info2.csv")
+    df['id'] = df['id'].astype(str)
+    df['title'] = df['title'].str.strip()
+    return df
 
 @st.cache_data
-def load_reviews(movie_title):
-    chunks = pd.read_csv("analyzed_reviews.csv", chunksize=1000)
-    filtered = pd.concat([chunk[chunk['title'] == movie_title] for chunk in chunks])
-    return filtered
+def load_reviews():
+    df = pd.read_csv("analyzed_reviews_with_id.csv")
+    df['id'] = df['id'].astype(str)
+    return df
 
-
-# === Check Files Exist ===
-if not os.path.exists("movie_info.csv") or not os.path.exists("analyzed_reviews.csv"):
-    st.error("Required CSV files are missing. Please ensure 'movie_info.csv' and 'analyzed_reviews.csv' are in the directory.")
+# === File Check ===
+if not os.path.exists("movie_info2.csv") or not os.path.exists("analyzed_reviews_with_id.csv"):
+    st.error("Required files missing.")
     st.stop()
-# === Load Movie Metadata ===
+
+# === Load Data ===
 df = load_movie_info()
+reviews_df = load_reviews()
 
-# Normalize the title columns to ensure consistent matching
-df['title'] = df['title'].str.strip()
+# === Movie Title Selector (uses ID internally) ===
+movie_dict = {row['title']: row['id'] for _, row in df.iterrows()}
+movie_titles = ["Select a movie"] + list(movie_dict.keys())
+selected_title = st.selectbox("🎬 Select a Movie", movie_titles)
 
-movie_titles = df['title'].unique()  # Extract unique movie titles
-movie_titles = np.insert(movie_titles, 0, "Select a movie")  # Add a placeholder option
-selected_movie = st.selectbox("🎬 Select a Movie", movie_titles, index=0)
+if selected_title == "Select a movie":
+    st.warning("Please select a movie.")
+    st.stop()
 
-if selected_movie == "Select a movie":
-    st.warning("Please select a movie to view its details.")
-else:
-    # === Show Metadata ===
-    movie_data = df[df['title'] == selected_movie]
-    if not movie_data.empty:
-        movie_data = movie_data.iloc[0]
-        col1, col2 = st.columns([2, 1])
-        with col1:
-            st.subheader(f"{selected_movie}")
-            st.markdown(f"**Release Year:** {movie_data['release_year']}")
-            st.markdown(f"**Runtime:** {movie_data['runtime']} minutes")
-            st.markdown(f"**Genres:** {', '.join(ast.literal_eval(movie_data['genres'])) if pd.notnull(movie_data['genres']) else 'N/A'}")
-            st.markdown(f"**Director:** {movie_data['director']}")
+selected_id = movie_dict[selected_title]
 
-        with col2:
-            if pd.notnull(movie_data['poster_url']):
-                try:
-                    response = requests.get(movie_data['poster_url'], timeout=5)
-                    response.raise_for_status()
-                    img = Image.open(BytesIO(response.content))
-                    st.image(img, use_container_width=False, width=400)  # Set a fixed width for larger display
-                except Exception as e:
-                    st.write(f"Failed to load poster: {e}")
-            else:
-                st.write("Poster not available")
+# === Filter Movie Info by ID ===
+movie_row = df[df['id'] == selected_id]
+if movie_row.empty:
+    st.error("Movie data not found.")
+    st.stop()
+
+movie = movie_row.iloc[0]
+
+# === Display Metadata ===
+col1, col2 = st.columns([2, 1])
+with col1:
+    st.subheader(movie['title'])
+    st.markdown(f"**Release Year:** {movie['release_year']}")
+    st.markdown(f"**Runtime:** {movie['runtime']} minutes")
+    genres = ast.literal_eval(movie['genres']) if pd.notnull(movie['genres']) else []
+    st.markdown(f"**Genres:** {', '.join(genres) if genres else 'N/A'}")
+    st.markdown(f"**Director:** {movie['director']}")
+with col2:
+    if pd.notnull(movie['poster_url']):
+        try:
+            response = requests.get(movie['poster_url'], timeout=5)
+            img = Image.open(BytesIO(response.content))
+            st.image(img, width=400)
+        except:
+            st.write("Poster could not be loaded.")
     else:
-        st.error("No data found for the selected movie.")
-#-----------------------------------------------------------------------------
-# Load reviews data
-reviews_df = pd.read_csv("analyzed_reviews.csv")
+        st.write("Poster not available.")
 
+# === Filter Reviews by ID ===
+movie_reviews = reviews_df[reviews_df['id'] == selected_id]
+st.markdown(f"📝 Total Reviews: **{len(movie_reviews)}**")
 
-# Step 1: Define the title mapping
-title_map = {
-    "avatar": "Avatar (2009)",
-    "avengers: endgame": "Avengers: Endgame (2019)",
-    "avatar: the way of water": "Avatar: The Way of Water (2022)",
-    "titanic": "Titanic (1997)",
-    "star wars: episode vii - the force awakens": "Star Wars: Episode VII – The Force Awakens (2015)",
-    "avengers: infinity war": "Avengers: Infinity War (2018)",
-    "spider-man: no way home": "Spider-Man: No Way Home (2021)",
-    "ne zha 2": "Ne Zha 2 (2025)",
-    "inside out 2": "Inside Out 2 (2024)",
-    "jurassic world": "Jurassic World (2015)",
-    "the lion king": "The Lion King (2019)",
-    "the avengers": "The Avengers (2012)",
-    "furious 7": "Furious 7 (2015)",
-    "top gun: maverick": "Top Gun: Maverick (2022)",
-    "frozen 2": "Frozen II (2019)",
-    "barbie": "Barbie (2023)",
-    "avengers: age of ultron": "Avengers: Age of Ultron (2015)",
-    "the super mario bros. movie": "The Super Mario Bros. Movie (2023)",
-    "black panther": "Black Panther (2018)",
-    "harry potter and the deathly hallows: part 2": "Harry Potter and the Deathly Hallows- Part 2 (2011)",
-    "star wars: the last jedi": "Star Wars: The Last Jedi (2017)",
-    "jurassic world: fallen kingdom": "Jurassic World: Fallen Kingdom (2018)",
-    "beauty and the beast": "Beauty and the Beast (2017)",
-    "incredibles 2": "Incredibles 2 (2018)",
-    "the fate of the furious": "The Fate of the Furious (2017)",
-    "iron man 3": "Iron Man 3 (2013)",
-    "minions": "Minions (2015)",
-    "captain america: civil war": "Captain America: Civil War (2016)",
-    "aquaman": "Aquaman (2018)",
-    "the lord of the rings: the return of the king": "The Lord of the Rings: The Return of the King (2003)",
-    "spider-man: far from home": "Spider-Man: Far From Home (2019)",
-    "captain marvel": "Captain Marvel (2019)",
-    "transformers: dark of the moon": "Transformers: Dark of the Moon (2011)",
-    "skyfall": "Skyfall (2012)",
-    "transformers: age of extinction": "Transformers: Age of Extinction (2014)",
-    "the dark knight rises": "The Dark Knight Rises (2012)",
-    "joker": "Joker (2019)",
-    "star wars: the rise of skywalker": "Star Wars: The Rise of Skywalker (2019)",
-    "toy story 4": "Toy Story 4 (2019)",
-    "toy story 3": "Toy Story 3 (2010)",
-    "pirates of the caribbean: dead man's chest": "Pirates of the Caribbean: Dead Man's Chest (2006)",
-    "moana 2": "Moana 2 (2024)",
-    "rogue one: a star wars story": "Rogue One: A Star Wars Story (2016)",
-    "aladdin": "Aladdin (2019)",
-    "pirates of the caribbean: on stranger tides": "Pirates of the Caribbean: On Stranger Tides (2011)",
-    "jurassic park": "Jurassic Park (1993)",
-    "despicable me 3": "Despicable Me 3 (2017)",
-    "finding dory": "Finding Dory (2016)",
-    "star wars: episode ix - the rise of skywalker": "Star Wars: Episode IX-The Rise of Skywalker (2019)",
-    "the batman": "The Batman (2022)"
-}
-
-# Ensure fallback for unmapped titles
-reviews_df["title"] = reviews_df["title"].str.lower().map(title_map).fillna(reviews_df["title"])
-
-# Normalize the title columns to ensure consistent matching
-reviews_df['title'] = reviews_df['title'].str.strip()
-
-# Filter reviews for the selected movie
-movie_reviews = reviews_df[reviews_df['title'].str.strip().str.lower() == selected_movie.strip().lower()]
-
-# Removed the warning for no reviews found
-if movie_reviews.empty:
-    pass  # No action needed if no reviews are found
-
-# === Sentiment Distribution ===
-sentiment_counts = movie_reviews["sentiment_label"].value_counts()
+# === Sentiment Counts ===
+sentiment_counts = movie_reviews['sentiment_label'].value_counts() if 'sentiment_label' in movie_reviews else pd.Series()
 
 # === Word Cloud ===
-if 'review' in movie_reviews.columns and not movie_reviews["review"].empty:
-    wordcloud = WordCloud(width=600, height=400, background_color='white').generate(" ".join(movie_reviews["review"]))
+if not movie_reviews['review'].empty:
+    wordcloud = WordCloud(width=600, height=400, background_color='white').generate(" ".join(movie_reviews['review']))
 
-# === Radar Chart Dummy Data (optional) ===
+# === Radar Chart Data ===
 emotion_cols = ['joy', 'anger', 'fear', 'sadness', 'surprise', 'love']
 for col in emotion_cols:
     if col not in movie_reviews.columns:
-        movie_reviews[col] = np.random.uniform(0, 1, len(movie_reviews))  # Fake values if not present
+        movie_reviews[col] = np.random.uniform(0, 1, len(movie_reviews))
 
-radar_values = movie_reviews[emotion_cols].mean().reset_index()
-radar_values.columns = ['emotion', 'value']
-radar_values = pd.concat([radar_values, radar_values.iloc[0:1]])  # close loop
+radar_df = movie_reviews[emotion_cols].mean().reset_index()
+radar_df.columns = ['emotion', 'value']
+radar_df = pd.concat([radar_df, radar_df.iloc[0:1]])
 
 # === Time-based Sentiment ===
-if "date" in movie_reviews.columns:
-    movie_reviews["date"] = pd.to_datetime(movie_reviews["date"])
-    time_sentiment = movie_reviews.groupby(movie_reviews["date"].dt.date)["sentiment_score"].mean()
+if 'date' in movie_reviews and 'sentiment_score' in movie_reviews:
+    movie_reviews['date'] = pd.to_datetime(movie_reviews['date'])
+    time_sentiment = movie_reviews.groupby(movie_reviews['date'].dt.date)['sentiment_score'].mean()
 
 # === Layout ===
-if selected_movie != "Select a movie":
-    st.subheader("📊 Reviews & Sentiment")
-    st.markdown("---")
+st.subheader("📊 Sentiment Dashboard")
+st.markdown("---")
 
-    # 1. Line Chart
-    st.subheader("📈 Time-based Sentiment Trend")
-    if "date" in movie_reviews.columns:
-        st.line_chart(time_sentiment)
+st.subheader("📈 Time-based Sentiment Trend")
+if 'sentiment_score' in movie_reviews:
+    st.line_chart(time_sentiment)
+
+col1, col2 = st.columns([1, 1])
+with col1:
+    st.subheader("☁️ Word Cloud")
+    if 'wordcloud' in locals():
+        st.image(wordcloud.to_array(), use_container_width=True)
     else:
-        st.warning("Date column missing for time-based sentiment.")
+        st.write("No reviews to display.")
+with col2:
+    st.subheader("🥧 Sentiment Distribution")
+    if not sentiment_counts.empty:
+        fig = px.pie(values=sentiment_counts.values, names=sentiment_counts.index)
+        st.plotly_chart(fig, use_container_width=True)
 
-    # 2. Word Cloud + Pie Chart
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        st.subheader("☁️ Word Cloud")
-        if 'wordcloud' in locals():
-            st.image(wordcloud.to_array(), use_container_width=True)
-        else:
-            st.write("No reviews to generate word cloud.")
-    with col2:
-        st.subheader("🥧 Sentiment Distribution (Pie Chart)")
-        fig_pie = px.pie(values=sentiment_counts.values, names=sentiment_counts.index, title="Sentiment Distribution")
-        st.plotly_chart(fig_pie, use_container_width=True)
+col3, col4 = st.columns([1, 1])
+with col3:
+    st.subheader("📊 Emotion Radar")
+    fig = px.line_polar(radar_df, r='value', theta='emotion', line_close=True, markers=True)
+    st.plotly_chart(fig, use_container_width=True)
+with col4:
+    st.subheader("📊 Average Sentiment per Label")
+    if 'sentiment_score' in movie_reviews:
+        avg_df = movie_reviews.groupby('sentiment_label')['sentiment_score'].mean().reset_index()
+        fig = px.bar(avg_df, x='sentiment_label', y='sentiment_score')
+        st.plotly_chart(fig, use_container_width=True)
 
-    # 3. Radar Chart + Bar Chart
-    col3, col4 = st.columns([1, 1])
-    with col3:
-        st.subheader("📊 Emotion Radar Chart")
-        fig_radar = px.line_polar(radar_values, r='value', theta='emotion', line_close=True,
-                                  title="Average Emotion Scores", markers=True)
-        st.plotly_chart(fig_radar, use_container_width=True)
-
-    with col4:
-        st.subheader("📊 Bar Chart: Sentiment Stats")
-        sentiment_avg = movie_reviews.groupby("sentiment_label")["sentiment_score"].mean().reset_index()
-        fig_bar = px.bar(sentiment_avg, x='sentiment_label', y='sentiment_score', title="Average Sentiment Score per Category")
-        st.plotly_chart(fig_bar, use_container_width=True)
-
-    # 4. Sample Reviews Section
-    st.markdown("---")
-    st.subheader("💬 Sample Reviews")
-    # Ensure there are enough reviews to sample from
-    if len(movie_reviews) >= 3:
-        for i, row in movie_reviews.sample(3).iterrows():
-            with st.expander(f"Review {i+1}"):
-                st.write(f"**Sentiment:** {row['sentiment_label']} (Score: {row['sentiment_score']:.2f})")
-                st.write(row["review"])
-    else:
-        st.warning("Not enough reviews available to display samples.")
-
-
+st.markdown("---")
+st.subheader("💬 Sample Reviews")
+if len(movie_reviews) >= 3:
+    for i, row in movie_reviews.sample(3).iterrows():
+        with st.expander(f"Review {i+1}"):
+            st.write(f"**Sentiment:** {row['sentiment_label']} (Score: {row['sentiment_score']:.2f})")
+            st.write(row['review'])
+else:
+    st.warning("Not enough reviews available.")

@@ -3,7 +3,7 @@ import pandas as pd
 import time
 import re
 
-API_KEY = '8b7e86368ff6b1858fb7f21d5821b211'
+API_KEY = ''#You Add your own Key 
 SEARCH_URL = 'https://api.themoviedb.org/3/search/movie'
 DETAILS_URL = 'https://api.themoviedb.org/3/movie/{}'
 CREDITS_URL = 'https://api.themoviedb.org/3/movie/{}/credits'

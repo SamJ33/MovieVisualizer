@@ -11,6 +11,8 @@ import os
 
 st.set_page_config(layout="wide", page_title="Movie Dashboard", page_icon="🎬")
 
+
+
 @st.cache_data
 def load_movie_info():
     df = pd.read_csv("movie_info2.csv")
@@ -35,6 +37,11 @@ reviews_df = load_reviews()
 
 # === Movie Title Selector (uses ID internally) ===
 movie_dict = {row['title']: row['id'] for _, row in df.iterrows()}
+
+# Add a title and description above the dropdown list
+st.title("Movie's Sentiment Visualizer")
+st.markdown("This Web app aims to display the sentiment analysis of the top 50 highest-grossing movies of all time through the audience reviews.")
+
 movie_titles = ["Select a movie"] + list(movie_dict.keys())
 selected_title = st.selectbox("🎬 Select a Movie", movie_titles)
 

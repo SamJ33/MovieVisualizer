@@ -133,9 +133,11 @@ with col4:
 
 st.markdown("---")
 st.subheader("💬 Sample Reviews")
+# Update the review numbering to count based on the ID repetitions
 if len(movie_reviews) >= 3:
-    for i, row in movie_reviews.sample(3).iterrows():
-        with st.expander(f"Review {i+1}"):
+    for i, (index, row) in enumerate(movie_reviews.sample(3).iterrows(), start=1):
+        review_number = movie_reviews.index.get_loc(index) + 1  # Get the position of the review within the filtered DataFrame
+        with st.expander(f"Review {review_number}"):
             st.write(f"**Sentiment:** {row['sentiment_label']} (Score: {row['sentiment_score']:.2f})")
             st.write(row['review'])
 else:

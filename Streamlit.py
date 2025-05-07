@@ -81,7 +81,7 @@ with col2:
 
 # === Filter Reviews by ID ===
 movie_reviews = reviews_df[reviews_df['id'] == selected_id]
-st.markdown(f"📝 Total Reviews: **{len(movie_reviews)}**")
+
 
 # === Sentiment Counts ===
 sentiment_counts = movie_reviews['sentiment_label'].value_counts() if 'sentiment_label' in movie_reviews else pd.Series()

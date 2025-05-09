@@ -9,15 +9,13 @@ import numpy as np
 import ast
 import os
 
-st.write("🔍 Debug — Files in current directory:", os.listdir())
-
 st.set_page_config(layout="wide", page_title="Movie Dashboard", page_icon="🎬")
 
 
 
 @st.cache_data
 def load_movie_info():
-    df = pd.read_csv("movie_info2.csv")
+    df = pd.read_csv("movie_info.csv")
     df['id'] = df['id'].astype(str)
     df['title'] = df['title'].str.strip()
     return df
@@ -29,7 +27,7 @@ def load_reviews():
     return df
     
 # === File Check ===
-if not os.path.exists("movie_info2.csv") or not os.path.exists("analyzed_reviews_with_id.csv"):
+if not os.path.exists("movie_info.csv") or not os.path.exists("analyzed_reviews_with_id.csv"):
     st.error("Required files missing.")
     st.stop()
 

@@ -6,37 +6,41 @@ This project involves scraping user reviews from Letterboxd for 50 popular movie
 
 - Scrape reviews from Letterboxd using Selenium.
 - Store scraped data in a structured CSV format.
-- Perform sentiment analysis using tools like VADER or Hugging Face Transformers.
+- Perform sentiment analysis using VADER.
 - Build a Streamlit dashboard that displays:
-  - Movie metadata (title, poster, genre, runtime, etc.)
+  - Movie metadata (title, poster, genre, runtime)
   - Sentiment distribution charts
   - Word clouds for positive and negative reviews
   - Sample user reviews
-  - Time-based sentiment trends (optional)
+  - Time-based sentiment trends
 
 ## Tools and Libraries Used
 
 - Python
 - Selenium
 - Pandas, NumPy
-- NLTK, VADER, or Transformers (for sentiment analysis)
+- NLTK, VADER (for sentiment analysis)
 - WordCloud, Matplotlib, Plotly
 - Streamlit
 - TMDb API (for fetching movie metadata)
 
 ## Project Structure
 
-- `scraper.py`: Script for scraping reviews from Letterboxd.
+- `letterboxdScraper.py`: Script for scraping reviews from Letterboxd.
+- `ReviewDatesScraper.py`: Script for scraping reviews' dates from Letterboxd.
+- `ReviewPreprocessor.py`: Script for preprocessing reviews.
+- `DatePreprocessor.py`: Script for preprocessing reviews' dates.
+- `Sentimentanalyzer.py`: Script for reviews' sentiment analysis.
+- `Streamlit.py`: Streamlit dashboard displaying the analysis.
 - `movies.csv`: Contains movie titles to be scraped.
-- `all_reviews.csv`: Output file storing collected reviews.
-- `app.py`: Streamlit dashboard displaying the analysis (optional, if implemented).
+- `all_reviews_analyzed_with_id.csv`: Output file storing collected, preprocessed, and analyzed reviews.
 - `README.md`: Project documentation.
 
 ## How the Scraping Works
 
 - The project uses Selenium with a headless Chrome browser to simulate user interaction.
 - A delay is added between scrolls and movie loads to reduce the chance of getting blocked.
-- Each team member is responsible for scraping a portion of the movies. This project scrapes 18 out of the total 50 movies.
+- Each team member is responsible for scraping a portion of the movies.
 - Reviews are stored under the column corresponding to each movie name in the output CSV.
 
 ## How to Use
@@ -45,7 +49,7 @@ This project involves scraping user reviews from Letterboxd for 50 popular movie
 2. Add your movies to `movies.csv` (one column per movie).
 3. Run the scraping script:
    ```bash
-   python scraper.py
+   python LetterboxdScraper.py
    ```
 4. Once data is collected, use it for sentiment analysis or visualization using the Streamlit app.
 

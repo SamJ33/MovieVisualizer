@@ -32,8 +32,9 @@ This project involves scraping user reviews from Letterboxd for 50 popular movie
 - `DatePreprocessor.py`: Script for preprocessing reviews' dates.
 - `Sentimentanalyzer.py`: Script for reviews' sentiment analysis.
 - `Streamlit.py`: Streamlit dashboard displaying the analysis.
-- `movies.csv`: Contains movie titles to be scraped.
-- `all_reviews_analyzed_with_id.csv`: Output file storing collected, preprocessed, and analyzed reviews.
+- `TMDB_API.py`: Script for fetching movie metadata from TMDB API.
+- `movies_info.csv`: Contains movie titles to be scraped and each movie's metadata.
+- `analyzed_reviews_with_id.csv`: Output file storing collected, preprocessed, and analyzed reviews.
 - `README.md`: Project documentation.
 
 ## How the Scraping Works

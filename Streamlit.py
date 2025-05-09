@@ -25,6 +25,8 @@ def load_reviews():
     df = pd.read_csv("analyzed_reviews_with_id.csv")
     df['id'] = df['id'].astype(str)
     return df
+    
+st.write("Files in current directory:", os.listdir())
 
 # === File Check ===
 if not os.path.exists("movie_info2.csv") or not os.path.exists("analyzed_reviews_with_id.csv"):

@@ -10,7 +10,7 @@ from selenium.common.exceptions import NoSuchElementException
 # ------------------- CONFIG -------------------
 
 REVIEWS_PER_MOVIE = 100
-MOVIE_CSV = "MovieReviewS.csv" #You change the name ACCORDING TO YOUR fILE!!!
+MOVIE_CSV = "Movies.csv" #You change the name ACCORDING TO YOUR fILE!!!
 OUTPUT_CSV = "all_reviews.csv"
 WAIT_BETWEEN_REVIEWS = (2, 5)     # seconds
 WAIT_BETWEEN_MOVIES = (10, 20)    # seconds

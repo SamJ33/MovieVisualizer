@@ -269,8 +269,8 @@ def main(input_csv, output_csv):
         print(f"\n{col}: {sample[:200]}{'...' if isinstance(sample, str) and len(sample) > 200 else ''}")
 
 if __name__ == "__main__":
-    INPUT_CSV = "AllReviewsSamira.csv"  # Input CSV with movies as columns
-    OUTPUT_CSV = "CleanedReviewsSamira.csv"  # Output CSV
+    INPUT_CSV = "RawReviews.csv"  # Input CSV with movies as columns
+    OUTPUT_CSV = "CleanedReviews.csv"  # Output CSV
     
     main(INPUT_CSV, OUTPUT_CSV)    
 

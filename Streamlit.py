@@ -101,13 +101,8 @@ radar_df.columns = ['emotion', 'value']
 radar_df = pd.concat([radar_df, radar_df.iloc[0:1]])
 
 # === Time-based Sentiment ===
-if 'date' in movie_reviews and 'sentiment_score' in movie_reviews:
-    movie_reviews['date'] = pd.to_datetime(movie_reviews['date'], errors='coerce')
-    movie_reviews = movie_reviews.dropna(subset=['date'])
-    movie_reviews['date'] = movie_reviews['date'].dt.floor('D')
-    time_sentiment = movie_reviews.groupby('date')['sentiment_score'].mean()
-#time_sentiment = movie_reviews.groupby('date')['sentiment_score'].mean()
-#time_sentiment.index = pd.to_datetime(time_sentiment.index)  
+time_sentiment = movie_reviews.groupby('date')['sentiment_score'].mean()
+time_sentiment.index = pd.to_datetime(time_sentiment.index)  
 
 # === Layout ===
 st.subheader("📊 Sentiment Dashboard")

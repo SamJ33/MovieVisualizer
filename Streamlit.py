@@ -111,7 +111,7 @@ st.markdown("---")
 
 st.subheader("📈 Time-based Sentiment Trend")
 if 'sentiment_score' in movie_reviews:
-    st.line_chart(data=time_sentiment, x='date', y='sentiment_score')
+    st.line_chart(data=time_sentiment)
 
 
 col1, col2 = st.columns([1, 1])

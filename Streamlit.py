@@ -103,7 +103,8 @@ radar_df = pd.concat([radar_df, radar_df.iloc[0:1]])
 # === Time-based Sentiment ===
 movie_reviews['date'] = pd.to_datetime(movie_reviews['date'], errors='coerce')
 movie_reviews['date_month'] = movie_reviews['date'].dt.to_period('M').dt.to_timestamp()
-time_sentiment = movie_reviews.groupby('date_month')['sentiment_score'].mean()
+time_sentiment = movie_reviews.groupby('date_month')['sentiment_score'].mean().reset_index()
+
 
 #time_sentiment = movie_reviews.groupby('date')['sentiment_score'].mean()
 #time_sentiment.index = pd.to_datetime(time_sentiment.index)  
@@ -114,7 +115,11 @@ st.markdown("---")
 
 st.subheader("📈 Time-based Sentiment Trend")
 if 'sentiment_score' in movie_reviews:
-    st.line_chart(time_sentiment)
+    st.line_chart(time_sentiment.set_index('date_month'))
+    movie_reviews = movie_reviews.dropna(subset=['date'])
+
+
+    #st.line_chart(time_sentiment)
 
 
 col1, col2 = st.columns([1, 1])

@@ -11,7 +11,7 @@ import ast
 import os
 
 # Logo setup
-image_path = r"C:\Users\jwsam\OneDrive\Desktop\PythonExp\MovieVisualizer\TMBDLogo.png"
+image_path = r"pages/images/TMBDLogo.png"
 if os.path.exists(image_path):
     with st.sidebar:
         st.image(image_path, width=150)

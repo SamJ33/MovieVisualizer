@@ -3,7 +3,7 @@ import pandas as pd
 import time
 import re
 
-API_KEY = ''#You Add Your Own KEY
+API_KEY = ''  # <-- Replace with your actual TMDB API key
 SEARCH_URL = 'https://api.themoviedb.org/3/search/movie'
 DETAILS_URL = 'https://api.themoviedb.org/3/movie/{}'
 CREDITS_URL = 'https://api.themoviedb.org/3/movie/{}/credits'
@@ -34,8 +34,8 @@ def extract_title_year(movie_str):
         return title, None if year == "Unknown" else year
     return movie_str.strip(), None
 
-
 def get_movie_info(title, year):
+    # Search for movie by title
     search = requests.get(SEARCH_URL, params={'api_key': API_KEY, 'query': title}).json()
     results = search.get('results', [])
 
@@ -52,10 +52,11 @@ def get_movie_info(title, year):
     movie = results[0]
     movie_id = movie['id']
 
+    # Get movie details
     details = requests.get(DETAILS_URL.format(movie_id), params={'api_key': API_KEY}).json()
+    # Get movie credits to find director
     credits = requests.get(CREDITS_URL.format(movie_id), params={'api_key': API_KEY}).json()
 
-    # Find the director
     director = ''
     for crew_member in credits.get('crew', []):
         if crew_member.get('job') == 'Director':
@@ -68,7 +69,10 @@ def get_movie_info(title, year):
         'genres': [genre['name'] for genre in details.get('genres', [])],
         'release_year': details.get('release_date', '')[:4],
         'runtime': details.get('runtime', ''),
-        'director': director
+        'director': director,
+        'user_score': details.get('vote_average', None),          # TMDB user score
+        'original_language': details.get('original_language', ''), # Original language ISO code
+        'overview': details.get('overview', '')                    # Movie summary/description
     }
 
 # Fetch info for all movies
@@ -79,12 +83,12 @@ for raw_title in raw_movies:
         info = get_movie_info(title, year)
         data.append(info)
         print(f"✅ Retrieved: {raw_title}")
-        time.sleep(0.3)
+        time.sleep(0.3)  # polite pause to avoid hitting rate limits
     except Exception as e:
         print(f"❌ Error with {raw_title}: {str(e)}")
         data.append({'title': raw_title, 'error': str(e)})
 
 # Save to CSV
 df = pd.DataFrame(data)
-df.to_csv("movie_info2.csv", index=False)
-print("✅ Movie data retrieval complete. CSV file saved as 'movie_info.csv'.")
+df.to_csv("movie_info_1.csv", index=False)
+print("✅ Movie data retrieval complete. CSV file saved as 'movie_info_1.csv'.")

@@ -8,7 +8,7 @@ import os
 st.set_page_config(page_title="Movie Dashboard",layout="wide", page_icon="🎬")
 
 # Logo setup
-image_path = r"images/TMBDLogo.png"
+image_path = r"pages/images/TMBDLogo.png"
 if os.path.exists(image_path):
     with st.sidebar:
         st.image(image_path, width=150)

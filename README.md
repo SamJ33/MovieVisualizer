@@ -26,10 +26,11 @@ This project involves scraping user reviews from Letterboxd for 50 popular movie
 
 ## Project Structure
 
-- `letterboxdScraper.py`: Script for scraping reviews from Letterboxd.
+- `LetterboxdScraper.py`: Script for scraping reviews from Letterboxd.
 - `ReviewDatesScraper.py`: Script for scraping reviews' dates from Letterboxd.
 - `ReviewPreprocessor.py`: Script for preprocessing reviews.
 - `DatePreprocessor.py`: Script for preprocessing reviews' dates.
+- `DataConcatination.py`: Script for concatinating data collected by the team members into one csv file.
 - `SentimentAnalysis.py`: Script for reviews' sentiment analysis.
 - `Streamlit.py`: Streamlit dashboard displaying the analysis.
 - `TMDB_API.py`: Script for fetching movie metadata from TMDB API.
